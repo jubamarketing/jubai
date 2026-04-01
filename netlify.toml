@@ -1,0 +1,5 @@
+[[redirects]]
+  from = "/api/webhook"
+  to = "https://hook.us2.make.com/qi85u052tv5infxppn4m4k86wr3u9ikq"
+  status = 200
+  force = true

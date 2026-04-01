@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JUBA.I</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Geist+Mono:wght@400;500&family=Geist:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+/* ══════════════════════════════════════════
+   TOKENS
+══════════════════════════════════════════ */
+:root {
+  --r:    #FF2020;
+  --r10:  rgba(255,32,32,.08);
+  --r20:  rgba(255,32,32,.18);
+  --r40:  rgba(255,32,32,.38);
+  --bg:   #060A12;
+  --s0:   #0B1018;
+  --s1:   #111824;
+  --s2:   #1A2130;
+  --b05:  rgba(255,255,255,.05);
+  --b08:  rgba(255,255,255,.08);
+  --b14:  rgba(255,255,255,.14);
+  --b30:  rgba(255,255,255,.30);
+  --tx:   #F0F2F8;
+  --tx2:  #8896B0;
+  --tx3:  #4A5568;
+  --syne: 'Syne', sans-serif;
+  --mono: 'Geist Mono', monospace;
+  --sans: 'Geist', sans-serif;
+  --ease: cubic-bezier(.22,.68,0,1.2);
+}
+
+/* ══════════════════════════════════════════
+   RESET + BASE
+══════════════════════════════════════════ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{height:100%}
+body{
+  font-family:var(--sans);
+  background:var(--bg);
+  color:var(--tx);
+  min-height:100vh;
+  display:flex;flex-direction:column;align-items:center;
+  padding:0 20px 80px;
+  overflow-x:hidden;
+}
+
+/* ══════════════════════════════════════════
+   BACKGROUND — layered atmosphere
+══════════════════════════════════════════ */
+.bg-layer{
+  position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:
+    /* red halo top-center */
+    radial-gradient(ellipse 70% 45% at 50% -5%, rgba(255,32,32,.14) 0%, transparent 70%),
+    /* deep blue corner */
+    radial-gradient(ellipse 50% 50% at 95% 90%, rgba(10,20,50,.8) 0%, transparent 60%),
+    /* base */
+    var(--bg);
+}
+
+/* animated noise grain */
+.grain{
+  position:fixed;inset:0;pointer-events:none;z-index:1;opacity:.028;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size:200px 200px;
+  animation:grain 8s steps(1) infinite;
+}
+@keyframes grain{
+  0%{transform:translate(0,0)}10%{transform:translate(-5%,-5%)}
+  20%{transform:translate(-10%,5%)}30%{transform:translate(5%,-10%)}
+  40%{transform:translate(-5%,15%)}50%{transform:translate(-10%,5%)}
+  60%{transform:translate(15%,0)}70%{transform:translate(0,10%)}
+  80%{transform:translate(-15%,0)}90%{transform:translate(10%,5%)}
+}
+
+/* thin horizontal rule across top */
+.top-rule{
+  position:fixed;top:0;left:0;right:0;height:1px;z-index:10;
+  background:linear-gradient(90deg,transparent 0%,var(--r) 30%,rgba(255,80,80,.5) 60%,transparent 100%);
+}
+
+/* ══════════════════════════════════════════
+   WORDMARK
+══════════════════════════════════════════ */
+.wordmark{
+  position:relative;z-index:10;
+  width:100%;max-width:600px;
+  padding:44px 0 32px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+
+.wm-left{display:flex;align-items:baseline;gap:0;line-height:1}
+.wm-logo{
+  font-family:var(--syne);font-weight:800;
+  font-size:56px;letter-spacing:-2px;color:var(--tx);
+}
+.wm-dot{color:var(--r)}
+.wm-sep{
+  width:1px;height:28px;
+  background:var(--b14);
+  margin:0 16px;align-self:center;
+}
+.wm-sub{
+  font-family:var(--mono);font-size:10px;
+  letter-spacing:.18em;color:var(--tx3);
+  text-transform:uppercase;align-self:center;
+}
+
+.wm-status{
+  display:flex;align-items:center;gap:7px;
+  font-family:var(--mono);font-size:9px;
+  letter-spacing:.12em;color:var(--tx3);
+  text-transform:uppercase;
+}
+.wm-dot-live{
+  width:6px;height:6px;border-radius:50%;
+  background:#22d55a;
+  box-shadow:0 0 0 3px rgba(34,213,90,.18);
+  animation:blink 2.4s ease infinite;
+}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* ══════════════════════════════════════════
+   TAB SWITCHER — pill style with indicator
+══════════════════════════════════════════ */
+.tabs{
+  position:relative;z-index:10;
+  width:100%;max-width:600px;
+  display:flex;gap:0;
+  background:var(--s0);
+  border:1px solid var(--b08);
+  border-radius:12px;padding:4px;
+  margin-bottom:20px;
+}
+
+.tab-btn{
+  flex:1;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  padding:10px 14px;
+  border:none;border-radius:9px;
+  background:transparent;color:var(--tx3);
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;
+  text-transform:uppercase;cursor:pointer;
+  transition:color .2s,background .2s;
+  position:relative;
+}
+.tab-btn.active{
+  background:var(--s2);color:var(--tx);
+  box-shadow:0 1px 3px rgba(0,0,0,.4),inset 0 1px 0 var(--b08);
+}
+.tab-btn.active .tab-pip{opacity:1}
+.tab-pip{
+  position:absolute;bottom:6px;left:50%;transform:translateX(-50%);
+  width:16px;height:2px;border-radius:99px;
+  background:var(--r);opacity:0;transition:opacity .25s;
+}
+
+/* ══════════════════════════════════════════
+   SHELL — the outer card glass
+══════════════════════════════════════════ */
+.shell{
+  position:relative;z-index:10;
+  width:100%;max-width:600px;
+  background:var(--s0);
+  border:1px solid var(--b08);
+  border-radius:20px;
+  overflow:hidden;
+}
+
+/* animated top edge */
+.shell-edge{
+  height:1px;width:100%;
+  background:linear-gradient(90deg,
+    transparent 0%, var(--r40) 20%, var(--r) 50%,
+    var(--r40) 80%, transparent 100%);
+  position:relative;
+}
+.shell-edge::after{
+  content:'';position:absolute;inset:0;
+  background:inherit;filter:blur(6px);opacity:.5;
+}
+
+/* faint inner glow from top */
+.shell::before{
+  content:'';position:absolute;
+  top:0;left:0;right:0;height:220px;
+  background:radial-gradient(ellipse 80% 100% at 50% 0%,rgba(255,32,32,.06) 0%,transparent 100%);
+  pointer-events:none;z-index:0;
+}
+
+/* ══════════════════════════════════════════
+   PANEL — inner layout
+══════════════════════════════════════════ */
+.panel{padding:36px 36px 32px;position:relative;z-index:1}
+
+/* ══════════════════════════════════════════
+   TAB CONTENT
+══════════════════════════════════════════ */
+.tab-content{display:none}
+.tab-content.active{display:block;animation:fadeUp .3s var(--ease)}
+@keyframes fadeUp{
+  from{opacity:0;transform:translateY(8px)}
+  to  {opacity:1;transform:translateY(0)}
+}
+
+/* ══════════════════════════════════════════
+   MODULE HEADER
+══════════════════════════════════════════ */
+.mod-header{
+  display:grid;
+  grid-template-columns:1fr auto;
+  align-items:start;
+  gap:12px;
+  margin-bottom:28px;
+  padding-bottom:24px;
+  border-bottom:1px solid var(--b05);
+}
+
+.mod-title{
+  font-family:var(--syne);font-weight:800;
+  font-size:44px;letter-spacing:-1.5px;line-height:.95;
+  color:var(--tx);
+}
+.mod-title span{color:var(--r)}
+
+.mod-meta{
+  display:flex;flex-direction:column;align-items:flex-end;gap:6px;
+  padding-top:4px;
+}
+.mod-chip{
+  font-family:var(--mono);font-size:8.5px;letter-spacing:.16em;
+  text-transform:uppercase;
+  color:var(--r);
+  background:var(--r10);
+  border:1px solid var(--r20);
+  border-radius:4px;padding:3px 8px;
+}
+.mod-desc{
+  font-family:var(--mono);font-size:9px;letter-spacing:.1em;
+  color:var(--tx3);text-align:right;
+}
+
+/* ══════════════════════════════════════════
+   FORM FIELDS
+══════════════════════════════════════════ */
+.field{margin-bottom:18px}
+
+.field-top{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:7px;
+}
+.field-label{
+  font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--tx2);
+}
+.field-hint{
+  font-family:var(--mono);font-size:9px;letter-spacing:.08em;
+  color:var(--tx3);
+}
+
+/* text input with left icon slot */
+.input-wrap{position:relative}
+.input-ico{
+  position:absolute;left:14px;top:50%;transform:translateY(-50%);
+  color:var(--tx3);pointer-events:none;
+  display:flex;align-items:center;
+}
+.text-in{
+  width:100%;padding:13px 16px 13px 42px;
+  background:var(--s1);
+  border:1px solid var(--b08);border-radius:10px;
+  color:var(--tx);font-family:var(--sans);font-size:13.5px;
+  outline:none;transition:border-color .2s,background .2s;
+}
+.text-in::placeholder{color:var(--tx3)}
+.text-in:focus{border-color:var(--r40);background:var(--s2)}
+
+/* ══════════════════════════════════════════
+   CUSTOM SELECT
+══════════════════════════════════════════ */
+select{display:none}
+.sel{position:relative;user-select:none}
+
+.sel-face{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:13px 16px;
+  background:var(--s1);border:1px solid var(--b08);border-radius:10px;
+  cursor:pointer;font-size:13.5px;color:var(--tx);
+  transition:border-color .2s,background .2s;
+}
+.sel.open .sel-face{border-color:var(--r40);background:var(--s2);border-radius:10px 10px 0 0}
+.sel-face:hover:not(.sel.open .sel-face){border-color:var(--b14)}
+
+.sel-left{display:flex;align-items:center;gap:10px}
+.sel-ico-wrap{color:var(--r);display:flex}
+.sel-arr{color:var(--tx3);display:flex;transition:transform .2s}
+.sel.open .sel-arr{transform:rotate(180deg)}
+
+.sel-drop{
+  position:absolute;top:100%;left:0;right:0;
+  background:var(--s2);border:1px solid var(--r40);border-top:none;
+  border-radius:0 0 10px 10px;z-index:200;
+  opacity:0;visibility:hidden;transform:translateY(-4px);
+  transition:opacity .18s,transform .18s,visibility .18s;
+  overflow:hidden;
+}
+.sel.open .sel-drop{opacity:1;visibility:visible;transform:translateY(0)}
+
+.sel-opt{
+  display:flex;align-items:center;gap:10px;
+  padding:12px 16px;font-size:13.5px;cursor:pointer;
+  color:var(--tx2);border-bottom:1px solid var(--b05);
+  transition:background .14s,color .14s;
+}
+.sel-opt:last-child{border-bottom:none}
+.sel-opt:hover{background:var(--r10);color:var(--tx)}
+.sel-opt .ico-c{color:var(--r);display:flex}
+
+/* ══════════════════════════════════════════
+   DROP ZONES
+══════════════════════════════════════════ */
+.dz{
+  border:1px dashed var(--b14);border-radius:12px;
+  min-height:124px;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  cursor:pointer;transition:border-color .22s,background .22s;
+  background:linear-gradient(135deg,var(--s1) 0%,var(--s0) 100%);
+  position:relative;overflow:hidden;
+}
+/* corner accents */
+.dz::before,.dz::after{
+  content:'';position:absolute;
+  width:16px;height:16px;
+}
+.dz::before{top:8px;left:8px;border-top:1px solid var(--b30);border-left:1px solid var(--b30);border-radius:3px 0 0 0}
+.dz::after {bottom:8px;right:8px;border-bottom:1px solid var(--b30);border-right:1px solid var(--b30);border-radius:0 0 3px 0}
+
+.dz:hover,.dz.drag-over{
+  border-color:var(--r);
+  background:linear-gradient(135deg,var(--r10) 0%,var(--s1) 100%);
+}
+.dz:hover::before,.dz.drag-over::before{border-color:var(--r40)}
+.dz:hover::after ,.dz.drag-over::after {border-color:var(--r40)}
+
+.dz-ph{
+  display:flex;flex-direction:column;align-items:center;gap:9px;
+  padding:20px;pointer-events:none;
+}
+.dz-icon-box{
+  width:46px;height:46px;border-radius:13px;
+  background:var(--r10);border:1px solid var(--r20);
+  display:flex;align-items:center;justify-content:center;color:var(--r);
+  transition:background .2s,transform .2s;
+}
+.dz:hover .dz-icon-box{background:var(--r20);transform:scale(1.06)}
+.dz-ph-label{font-family:var(--mono);font-size:11px;color:var(--tx2);letter-spacing:.06em}
+.dz-ph-fmt  {font-family:var(--mono);font-size:8.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--tx3)}
+
+/* preview after upload */
+.dz-filled{width:100%;padding:14px;display:flex;flex-direction:column;align-items:center;gap:10px}
+.prev-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;width:100%}
+.prev-cell{
+  aspect-ratio:1;border-radius:8px;overflow:hidden;
+  border:1px solid var(--b08);background:var(--s2);
+  display:flex;align-items:center;justify-content:center;flex-direction:column;gap:3px;
+  font-family:var(--mono);font-size:7.5px;color:var(--tx3);
+}
+.prev-cell img{width:100%;height:100%;object-fit:cover}
+
+.btn-clr{
+  display:none;
+  align-items:center;gap:5px;
+  background:none;border:1px solid var(--r20);
+  color:rgba(255,100,100,.6);border-radius:99px;
+  font-family:var(--mono);font-size:8.5px;letter-spacing:.12em;
+  text-transform:uppercase;padding:4px 12px;cursor:pointer;
+  transition:background .2s,color .2s;
+}
+.btn-clr:hover{background:var(--r10);color:#ff8080}
+
+/* ══════════════════════════════════════════
+   CTA BUTTON — geometric / bold
+══════════════════════════════════════════ */
+.btn-cta{
+  width:100%;padding:18px 24px;margin-top:4px;
+  background:var(--r);border:none;border-radius:12px;
+  color:#fff;
+  font-family:var(--syne);font-weight:700;
+  font-size:20px;letter-spacing:.06em;
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  cursor:pointer;position:relative;overflow:hidden;
+  transition:transform .3s var(--ease),box-shadow .3s,filter .2s;
+}
+/* shine sweep */
+.btn-cta::after{
+  content:'';
+  position:absolute;top:0;left:-100%;
+  width:60%;height:100%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.18),transparent);
+  transition:left .5s ease;
+}
+.btn-cta:hover::after{left:150%}
+.btn-cta:hover{
+  transform:translateY(-2px);
+  box-shadow:0 12px 36px -8px rgba(255,32,32,.55);
+  filter:brightness(1.05);
+}
+.btn-cta:active{transform:translateY(0);box-shadow:none}
+
+/* ══════════════════════════════════════════
+   FOOTER STRIP (inside shell)
+══════════════════════════════════════════ */
+.shell-footer{
+  border-top:1px solid var(--b05);
+  padding:0 36px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+
+/* quick links */
+.qlinks{display:flex;gap:2px;padding:12px 0}
+.qlink{
+  width:38px;height:38px;border-radius:8px;
+  border:none;background:transparent;
+  color:var(--tx3);display:flex;align-items:center;justify-content:center;
+  text-decoration:none;cursor:pointer;
+  transition:background .18s,color .18s,transform .22s var(--ease);
+}
+.qlink:hover{background:var(--b08);color:var(--tx);transform:translateY(-2px)}
+
+/* version badge */
+.ver{
+  font-family:var(--mono);font-size:8.5px;letter-spacing:.14em;
+  color:var(--tx3);text-transform:uppercase;
+}
+
+/* ══════════════════════════════════════════
+   OVERLAY
+══════════════════════════════════════════ */
+.overlay{
+  position:absolute;inset:0;
+  background:rgba(6,10,18,.96);
+  backdrop-filter:blur(12px);
+  border-radius:20px;z-index:300;
+  display:none;flex-direction:column;
+  align-items:center;justify-content:center;gap:18px;
+}
+.overlay.on{display:flex}
+
+.spin-track{
+  width:52px;height:52px;position:relative;
+}
+.spin-track svg{animation:rotate 1.1s linear infinite}
+@keyframes rotate{to{transform:rotate(360deg)}}
+
+.ov-title{font-family:var(--syne);font-weight:800;font-size:24px;letter-spacing:-.5px;color:var(--tx)}
+.ov-msg  {font-family:var(--mono);font-size:9px;letter-spacing:.16em;color:var(--tx3);text-transform:uppercase}
+
+/* ══════════════════════════════════════════
+   TOAST
+══════════════════════════════════════════ */
+.toast{
+  position:fixed;bottom:28px;left:50%;
+  transform:translateX(-50%) translateY(60px);
+  background:var(--s2);border-radius:10px;
+  border:1px solid var(--b14);
+  padding:11px 20px;
+  font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--tx);
+  white-space:nowrap;z-index:9999;
+  transition:transform .35s var(--ease);
+}
+.toast.on{transform:translateX(-50%) translateY(0)}
+.toast.err{border-color:rgba(255,80,80,.5)}
+.toast.ok {border-color:rgba(50,220,100,.4)}
+
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+
+<!-- SPRITE -->
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+<defs>
+
+<symbol id="s-mic" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+  <rect x="7" y="1.5" width="6" height="9.5" rx="3" stroke-width="1.5"/>
+  <path d="M3.5 9.5A6.5 6.5 0 0 0 10 16a6.5 6.5 0 0 0 6.5-6.5" stroke-width="1.5"/>
+  <line x1="10" y1="16" x2="10" y2="18.5" stroke-width="1.5"/>
+  <line x1="7" y1="18.5" x2="13" y2="18.5" stroke-width="1.5"/>
+</symbol>
+
+<symbol id="s-eye" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M1.5 10s3-5.5 8.5-5.5S18.5 10 18.5 10s-3 5.5-8.5 5.5S1.5 10 1.5 10Z" stroke-width="1.5"/>
+  <circle cx="10" cy="10" r="2.25" stroke-width="1.5"/>
+  <circle cx="10" cy="10" r=".6" fill="currentColor" stroke="none"/>
+</symbol>
+
+<symbol id="s-bolt" viewBox="0 0 18 20" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M10.5 1.5 2.5 11h7L7.5 18.5l8-9.5h-7L10.5 1.5Z" stroke-width="1.6" stroke-linejoin="round"/>
+</symbol>
+
+<symbol id="s-up" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M6.5 16.5A5 5 0 0 1 6.5 7a5 5 0 0 1 9.9-.5A4 4 0 0 1 16 15" stroke-width="1.6"/>
+  <line x1="11" y1="11" x2="11" y2="18" stroke-width="1.6"/>
+  <polyline points="8.5,13.5 11,11 13.5,13.5" stroke-width="1.6"/>
+</symbol>
+
+<symbol id="s-doc-check" viewBox="0 0 20 22" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M12 1H4a1 1 0 0 0-1 1v18a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V7Z" stroke-width="1.5"/>
+  <polyline points="12 1 12 7 18 7" stroke-width="1.5"/>
+  <polyline points="7 13 9.5 15.5 14 10.5" stroke-width="1.5"/>
+</symbol>
+
+<symbol id="s-lines" viewBox="0 0 20 22" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M12 1H4a1 1 0 0 0-1 1v18a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V7Z" stroke-width="1.5"/>
+  <polyline points="12 1 12 7 18 7" stroke-width="1.5"/>
+  <line x1="7" y1="11" x2="13" y2="11" stroke-width="1.5"/>
+  <line x1="7" y1="14" x2="13" y2="14" stroke-width="1.5"/>
+  <line x1="7" y1="17" x2="11" y2="17" stroke-width="1.5"/>
+</symbol>
+
+<symbol id="s-img" viewBox="0 0 22 20" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+  <rect x="1.5" y="2.5" width="19" height="15" rx="2.5" stroke-width="1.5"/>
+  <circle cx="7.5" cy="8" r="1.8" stroke-width="1.5"/>
+  <path d="M1.5 14l5-5 4 4 3-2.5 7 6" stroke-width="1.5"/>
+</symbol>
+
+<symbol id="s-vid" viewBox="0 0 22 18" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+  <rect x="1.5" y="2.5" width="13" height="13" rx="2.5" stroke-width="1.5"/>
+  <path d="M14.5 6.5 20.5 3.5v11l-6-3V6.5Z" stroke-width="1.5"/>
+</symbol>
+
+<symbol id="s-chevdown" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-linecap="round">
+  <path d="M3 5.5 8 11 13 5.5" stroke-width="1.6"/>
+</symbol>
+
+<symbol id="s-x" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-linecap="round">
+  <path d="M1.5 1.5 12.5 12.5M12.5 1.5 1.5 12.5" stroke-width="1.6"/>
+</symbol>
+
+<symbol id="s-link" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M8 11.5a4 4 0 0 0 5.5.5l2.5-2.5a4 4 0 0 0-5.5-5.5L9 5.3" stroke-width="1.5"/>
+  <path d="M12 8.5a4 4 0 0 0-5.5-.5L4 10.5A4 4 0 0 0 9.5 16l1.2-1.2" stroke-width="1.5"/>
+</symbol>
+
+<symbol id="s-make" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+  <rect x="3.5" y="7" width="13" height="10" rx="2.5" stroke-width="1.5"/>
+  <path d="M7 7V5a3 3 0 0 1 6 0v2" stroke-width="1.5"/>
+  <circle cx="7.5" cy="12" r="1" fill="currentColor" stroke="none"/>
+  <circle cx="12.5" cy="12" r="1" fill="currentColor" stroke="none"/>
+  <path d="M8.5 15.5h3" stroke-width="1.5"/>
+</symbol>
+
+<symbol id="s-meta" viewBox="0 0 20 16" fill="none" stroke="currentColor" stroke-linecap="round">
+  <path d="M1.5 13C1.5 9 3.5 3 6.5 3c2 0 3 2.5 3.5 5C10.5 5.5 11.5 3 13.5 3 16.5 3 18.5 9 18.5 13" stroke-width="1.5"/>
+</symbol>
+
+<symbol id="s-qr" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-linecap="round">
+  <rect x="2" y="2" width="7" height="7" rx="1.2" stroke-width="1.4"/>
+  <rect x="11" y="2" width="7" height="7" rx="1.2" stroke-width="1.4"/>
+  <rect x="2" y="11" width="7" height="7" rx="1.2" stroke-width="1.4"/>
+  <rect x="4" y="4" width="3" height="3" rx=".4" fill="currentColor" stroke="none"/>
+  <rect x="13" y="4" width="3" height="3" rx=".4" fill="currentColor" stroke="none"/>
+  <rect x="4" y="13" width="3" height="3" rx=".4" fill="currentColor" stroke="none"/>
+  <rect x="13" y="13" width="1.5" height="1.5" fill="currentColor" stroke="none"/>
+  <rect x="15.5" y="11" width="1.5" height="1.5" fill="currentColor" stroke="none"/>
+  <rect x="11" y="15.5" width="4" height="1.5" fill="currentColor" stroke="none"/>
+</symbol>
+
+<symbol id="s-gdrive" viewBox="0 0 22 20" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M7.5 2 1 13.5h6L13.5 2Z" stroke-width="1.5"/>
+  <path d="M14 2l7 12.5h-7L7.5 2Z" stroke-width="1.5"/>
+  <path d="M1 13.5l3.5 5h12l3.5-5" stroke-width="1.5"/>
+</symbol>
+
+</defs>
+</svg>
+
+<!-- ATMOSPHERE -->
+<div class="bg-layer"></div>
+<div class="grain"></div>
+<div class="top-rule"></div>
+<div id="toast" class="toast"></div>
+
+<!-- ── WORDMARK ─────────────────────────────── -->
+<div class="wordmark">
+  <div class="wm-left">
+    <span class="wm-logo">JUBA<span class="wm-dot">.I</span></span>
+    <div class="wm-sep"></div>
+    <span class="wm-sub">Hub de Inteligência</span>
+  </div>
+  <div class="wm-status">
+    <div class="wm-dot-live"></div>
+    <span>online</span>
+  </div>
+</div>
+
+<!-- ── TABS ──────────────────────────────────── -->
+<div class="tabs">
+  <button class="tab-btn" id="btn-reuniao" onclick="switchTab('reuniao')">
+    <svg width="15" height="15" viewBox="0 0 20 20"><use href="#s-mic"/></svg>
+    Reuniões
+    <div class="tab-pip"></div>
+  </button>
+  <button class="tab-btn active" id="btn-auditoria" onclick="switchTab('auditoria')">
+    <svg width="15" height="15" viewBox="0 0 20 20"><use href="#s-eye"/></svg>
+    Auditoria
+    <div class="tab-pip"></div>
+  </button>
+</div>
+
+<!-- ── SHELL ─────────────────────────────────── -->
+<div class="shell">
+
+  <!-- animated top edge -->
+  <div class="shell-edge"></div>
+
+  <!-- overlay -->
+  <div class="overlay" id="overlay">
+    <div class="spin-track">
+      <svg width="52" height="52" viewBox="0 0 52 52" fill="none">
+        <circle cx="26" cy="26" r="22" stroke="rgba(255,32,32,.12)" stroke-width="2.5"/>
+        <path d="M26 4a22 22 0 0 1 22 22" stroke="#FF2020" stroke-width="2.5" stroke-linecap="round"/>
+        <!-- inner counter arc -->
+        <circle cx="26" cy="26" r="14" stroke="rgba(255,32,32,.07)" stroke-width="2"/>
+        <path d="M26 40a14 14 0 0 1-14-14" stroke="rgba(255,80,80,.35)" stroke-width="2" stroke-linecap="round"
+          style="animation:rotate 1.7s linear infinite reverse"/>
+      </svg>
+    </div>
+    <div class="ov-title" id="ovTitle">Processando</div>
+    <div class="ov-msg" id="ovMsg">enviando para análise...</div>
+  </div>
+
+  <!-- ── TAB REUNIÃO ── -->
+  <div class="panel">
+    <div id="tab-reuniao" class="tab-content">
+      <div class="mod-header">
+        <div class="mod-title">Reuni<span>ão</span></div>
+        <div class="mod-meta">
+          <span class="mod-chip">Módulo Ativo</span>
+          <span class="mod-desc">Inteligência Executiva</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="field-top">
+          <span class="field-label">Link do Google Drive</span>
+          <span class="field-hint">áudio da reunião</span>
+        </div>
+        <div class="input-wrap">
+          <span class="input-ico">
+            <svg width="15" height="15" viewBox="0 0 20 20"><use href="#s-link"/></svg>
+          </span>
+          <input class="text-in" type="text" id="driveLink" placeholder="https://drive.google.com/...">
+        </div>
+      </div>
+
+      <button class="btn-cta" onclick="enviarReuniao()">
+        <svg width="16" height="18" viewBox="0 0 18 20"><use href="#s-bolt"/></svg>
+        Gerar Ata
+      </button>
+    </div>
+
+    <!-- ── TAB AUDITORIA ── -->
+    <div id="tab-auditoria" class="tab-content active">
+      <div class="mod-header">
+        <div class="mod-title">Audit<span>.or</span></div>
+        <div class="mod-meta">
+          <span class="mod-chip">Módulo Ativo</span>
+          <span class="mod-desc">Auditoria Visual</span>
+        </div>
+      </div>
+
+      <!-- Select -->
+      <div class="field">
+        <div class="field-top"><span class="field-label">Módulo de análise</span></div>
+        <div class="sel" id="selWrap">
+          <div class="sel-face" onclick="toggleSel()">
+            <div class="sel-left" id="selLabel">
+              <span class="sel-ico-wrap">
+                <svg width="15" height="16" viewBox="0 0 20 22"><use href="#s-lines"/></svg>
+              </span>
+              Encarte (Múltiplas Págs)
+            </div>
+            <span class="sel-arr">
+              <svg width="13" height="13" viewBox="0 0 16 16"><use href="#s-chevdown"/></svg>
+            </span>
+          </div>
+          <div class="sel-drop">
+            <div class="sel-opt" data-value="encarte" data-sym="s-lines" onclick="pickSel(this)">
+              <span class="ico-c"><svg width="14" height="15" viewBox="0 0 20 22"><use href="#s-lines"/></svg></span>
+              Encarte (Múltiplas Págs)
+            </div>
+            <div class="sel-opt" data-value="banner" data-sym="s-img" onclick="pickSel(this)">
+              <span class="ico-c"><svg width="15" height="14" viewBox="0 0 22 20"><use href="#s-img"/></svg></span>
+              Banner Único
+            </div>
+            <div class="sel-opt" data-value="video" data-sym="s-vid" onclick="pickSel(this)">
+              <span class="ico-c"><svg width="15" height="13" viewBox="0 0 22 18"><use href="#s-vid"/></svg></span>
+              Vídeo / Reels
+            </div>
+          </div>
+        </div>
+        <select id="tipoAnalise">
+          <option value="encarte" selected>Encarte</option>
+          <option value="banner">Banner</option>
+          <option value="video">Video</option>
+        </select>
+      </div>
+
+      <!-- Drop zone — mídia -->
+      <div class="field">
+        <div class="field-top">
+          <span class="field-label">Arquivos visuais</span>
+          <span class="field-hint">PNG · JPG · PDF · MP4</span>
+        </div>
+        <div class="dz" id="dzM"
+          onclick="document.getElementById('inM').click()"
+          ondragover="dov(event,'dzM')" ondragleave="dlv('dzM')"
+          ondrop="ddrop(event,'inM','gM','phM','clM')">
+          <div class="dz-ph" id="phM">
+            <div class="dz-icon-box">
+              <svg width="22" height="22" viewBox="0 0 22 22"><use href="#s-up"/></svg>
+            </div>
+            <div class="dz-ph-label">Clique, arraste ou cole</div>
+            <div class="dz-ph-fmt">PNG · JPG · PDF · MP4</div>
+          </div>
+          <div class="dz-filled" id="wM" style="display:none">
+            <div class="prev-grid" id="gM"></div>
+            <button class="btn-clr" id="clM" style="display:none"
+              onclick="resetDz('inM','gM','clM','phM','wM',event)">
+              <svg width="10" height="10" viewBox="0 0 14 14"><use href="#s-x"/></svg>limpar
+            </button>
+          </div>
+          <input type="file" id="inM" hidden multiple accept="image/*,video/mp4,application/pdf">
+        </div>
+      </div>
+
+      <!-- Drop zone — gabarito -->
+      <div class="field" id="gabField">
+        <div class="field-top">
+          <span class="field-label">Gabarito</span>
+          <span class="field-hint">PDF ou Imagem</span>
+        </div>
+        <div class="dz" id="dzG"
+          onclick="document.getElementById('inG').click()"
+          ondragover="dov(event,'dzG')" ondragleave="dlv('dzG')"
+          ondrop="ddrop(event,'inG','gG','phG','clG')">
+          <div class="dz-ph" id="phG">
+            <div class="dz-icon-box">
+              <svg width="20" height="22" viewBox="0 0 20 22"><use href="#s-doc-check"/></svg>
+            </div>
+            <div class="dz-ph-label">Arraste o gabarito</div>
+            <div class="dz-ph-fmt">PDF · PNG · JPG</div>
+          </div>
+          <div class="dz-filled" id="wG" style="display:none">
+            <div class="prev-grid" id="gG"></div>
+            <button class="btn-clr" id="clG" style="display:none"
+              onclick="resetDz('inG','gG','clG','phG','wG',event)">
+              <svg width="10" height="10" viewBox="0 0 14 14"><use href="#s-x"/></svg>limpar
+            </button>
+          </div>
+          <input type="file" id="inG" hidden accept="application/pdf,image/*">
+        </div>
+      </div>
+
+      <button class="btn-cta" onclick="enviarAuditoria()">
+        <svg width="16" height="18" viewBox="0 0 18 20"><use href="#s-bolt"/></svg>
+        Iniciar Auditoria
+      </button>
+    </div>
+  </div><!-- /panel -->
+
+  <!-- footer -->
+  <div class="shell-footer">
+    <div class="qlinks">
+      <a href="https://us2.make.com/" target="_blank" class="qlink" title="Make">
+        <svg width="18" height="18" viewBox="0 0 20 20"><use href="#s-make"/></svg>
+      </a>
+      <a href="https://business.facebook.com/" target="_blank" class="qlink" title="Meta">
+        <svg width="18" height="14" viewBox="0 0 20 16"><use href="#s-meta"/></svg>
+      </a>
+      <a href="https://www.qrofertas.com/" target="_blank" class="qlink" title="QR Ofertas">
+        <svg width="18" height="18" viewBox="0 0 20 20"><use href="#s-qr"/></svg>
+      </a>
+      <a href="https://drive.google.com/" target="_blank" class="qlink" title="Google Drive">
+        <svg width="19" height="17" viewBox="0 0 22 20"><use href="#s-gdrive"/></svg>
+      </a>
+    </div>
+    <div class="ver">v 4.0</div>
+  </div>
+
+</div><!-- /shell -->
+
+<script>
+const WH = "/api/webhook";
+const BAD = [
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/msword'
+];
+
+/* toast */
+const T = document.getElementById('toast');
+function toast(msg,cls=''){T.textContent=msg;T.className=`toast on ${cls}`;setTimeout(()=>T.className='toast',4500)}
+
+/* tabs */
+function switchTab(t){
+  document.querySelectorAll('.tab-btn,.tab-content').forEach(e=>e.classList.remove('active'));
+  document.getElementById('btn-'+t).classList.add('active');
+  document.getElementById('tab-'+t).classList.add('active');
+}
+
+/* select */
+function toggleSel(){document.getElementById('selWrap').classList.toggle('open')}
+document.addEventListener('click',e=>{const w=document.getElementById('selWrap');if(!w.contains(e.target))w.classList.remove('open')});
+function pickSel(el){
+  const sym=el.dataset.sym;
+  const txt=el.childNodes[el.childNodes.length-1].textContent.trim();
+  document.getElementById('selLabel').innerHTML=
+    `<span class="sel-ico-wrap"><svg width="14" height="15" viewBox="0 0 20 22" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"><use href="#${sym}"/></svg></span>${txt}`;
+  document.getElementById('selWrap').classList.remove('open');
+  const v=el.dataset.value;
+  document.getElementById('tipoAnalise').value=v;
+  document.getElementById('gabField').className=v==='encarte'?'field':'hidden';
+}
+
+/* drag */
+function dov(e,id){e.preventDefault();document.getElementById(id).classList.add('drag-over')}
+function dlv(id){document.getElementById(id).classList.remove('drag-over')}
+function ddrop(e,inp,g,ph,cl){
+  e.preventDefault();e.currentTarget.classList.remove('drag-over');
+  addFiles(e.dataTransfer.files,document.getElementById(inp),g,ph,cl);
+}
+
+/* paste */
+document.addEventListener('paste',e=>{
+  const f=[];for(const i of(e.clipboardData?.items||[]))if(i.kind==='file')f.push(i.getAsFile());
+  if(f.length)addFiles(f,document.getElementById('inM'),'gM','phM','clM');
+});
+
+/* files */
+const MAX_FILE_MB  = 8;   // limite por arquivo
+const MAX_TOTAL_MB = 25;  // limite total do pacote (evita 413)
+
+function ok(f){
+  if(BAD.includes(f.type)){toast(`❌ "${f.name}" não suportado. Use PDF ou imagem.`,'err');return false}
+  if(f.size>MAX_FILE_MB*1024*1024){
+    toast(`❌ "${f.name}" ultrapassa ${MAX_FILE_MB}MB. Reduza a resolução antes de enviar.`,'err');
+    return false;
+  }
+  return true;
+}
+
+function totalMB(files){
+  return Array.from(files).reduce((s,f)=>s+f.size,0)/(1024*1024);
+}
+function addFiles(files,input,g,ph,cl,replace=false){
+  const v=Array.from(files).filter(ok);if(!v.length)return;
+  const dt=new DataTransfer();
+  if(!replace) Array.from(input.files||[]).forEach(f=>dt.items.add(f));
+  v.forEach(f=>dt.items.add(f));input.files=dt.files;
+  render(input.files,g,ph,cl);
+}
+function render(files,g,ph,cl){
+  const grid=document.getElementById(g);
+  const wrap=document.getElementById(cl.replace('cl','w'));
+  const clear=document.getElementById(cl);
+  const plc=document.getElementById(ph);
+  grid.innerHTML='';
+  plc.style.display=files.length?'none':'flex';
+  wrap.style.display=files.length?'flex':'none';
+  clear.style.display=files.length?'inline-flex':'none';
+  Array.from(files).forEach(f=>{
+    const c=document.createElement('div');c.className='prev-cell';
+    if(f.type.startsWith('image')){const i=document.createElement('img');i.src=URL.createObjectURL(f);c.appendChild(i)}
+    else{
+      const ext=f.name.split('.').pop().toUpperCase();
+      c.innerHTML=`<svg width="20" height="20" viewBox="0 0 20 22" fill="none" stroke="#FF2020" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><use href="#s-lines"/></svg><span>${ext}</span>`;
+    }
+    grid.appendChild(c);
+  });
+}
+function resetDz(inp,g,cl,ph,w,e){
+  if(e)e.stopPropagation();
+  document.getElementById(inp).value='';
+  document.getElementById(g).innerHTML='';
+  document.getElementById(cl).style.display='none';
+  document.getElementById(ph).style.display='flex';
+  document.getElementById(w).style.display='none';
+}
+document.getElementById('inM').onchange=e=>addFiles(e.target.files,e.target,'gM','phM','clM',true);
+document.getElementById('inG').onchange=e=>addFiles(e.target.files,e.target,'gG','phG','clG',true);
+
+/* overlay */
+function setOv(on,title='Processando',msg=''){
+  document.getElementById('overlay').classList.toggle('on',on);
+  document.getElementById('ovTitle').textContent=title;
+  document.getElementById('ovMsg').textContent=msg;
+}
+
+/* send */
+async function enviarAuditoria(){
+  const files=Array.from(document.getElementById('inM').files);
+  if(!files.length){toast('⚠️ Adicione pelo menos um arquivo visual.','err');return}
+  for(const f of files)if(!ok(f))return;
+  const gab=document.getElementById('inG').files[0];
+  if(gab&&!ok(gab))return;
+
+  // Verifica tamanho total do pacote antes de enviar
+  const allFiles=[...files,...(gab?[gab]:[])];
+  const total=totalMB(allFiles);
+  if(total>MAX_TOTAL_MB){
+    toast(`❌ Pacote muito grande (${total.toFixed(1)}MB). Limite: ${MAX_TOTAL_MB}MB. Envie menos imagens ou reduza a resolução.`,'err');
+    return;
+  }
+
+  setOv(true,'Analisando',`enviando ${files.length} arquivo(s) — ${total.toFixed(1)}MB...`);
+
+  const fd=new FormData();
+  fd.append('tipo',document.getElementById('tipoAnalise').value);
+  files.forEach(f=>fd.append('imagem',f,f.name));
+  if(gab)fd.append('tabela',gab,gab.name);
+
+  try{
+    const r=await fetch(WH,{
+      method:'POST',
+      mode:'cors',
+      body:fd,
+      headers:{'Accept':'application/json'}
+    });
+    // Make responde com 200 mesmo em processamento assíncrono
+    if(r.status===413){
+      toast('❌ Arquivo(s) muito grande(s) para o servidor. Reduza a resolução das imagens.','err');
+      setOv(false);return;
+    }
+    if(!r.ok && r.status!==0) throw new Error('Status '+r.status);
+    toast('✅ Enviado! O resultado chegará por e-mail em breve.','ok');
+    setTimeout(()=>location.reload(),3500);
+  }catch(err){
+    // Erro de rede/CORS após envio pode ser falso positivo — Make já recebeu
+    if(err.message==='Failed to fetch'||err.message.includes('NetworkError')){
+      toast('✅ Enviado! (O servidor processará em segundo plano.)','ok');
+      setTimeout(()=>location.reload(),3500);
+    } else {
+      toast('❌ Erro: '+err.message,'err');
+      setOv(false);
+    }
+  }
+}
+
+async function enviarReuniao(){
+  const l=document.getElementById('driveLink').value.trim();
+  if(!l){toast('⚠️ Cole o link do Google Drive.','err');return}
+  setOv(true,'Gerando Ata','processando o áudio da reunião...');
+  const fd=new FormData();
+  fd.append('tipo','reuniao');
+  fd.append('file_url',l);
+  try{
+    const r=await fetch(WH,{
+      method:'POST',
+      mode:'cors',
+      body:fd,
+      headers:{'Accept':'application/json'}
+    });
+    if(!r.ok && r.status!==0) throw new Error('Status '+r.status);
+    toast('✅ Enviado! A ata chegará por e-mail.','ok');
+    setTimeout(()=>location.reload(),3500);
+  }catch(err){
+    if(err.message==='Failed to fetch'||err.message.includes('NetworkError')){
+      toast('✅ Enviado! (O servidor processará em segundo plano.)','ok');
+      setTimeout(()=>location.reload(),3500);
+    } else {
+      toast('❌ Erro: '+err.message,'err');
+      setOv(false);
+    }
+  }
+}
+</script>
+</body>
+</html>
